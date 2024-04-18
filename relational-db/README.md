@@ -1,0 +1,1 @@
+I am going to implement a relational database management system (rdbms) based on SQLite, from scratch. I haven't decided on a language or anything yet so I'll come back and write all that stuff down later.
