@@ -3,6 +3,8 @@ package tokenizer
 import (
 	"errors"
 	"sync"
+
+	"github.com/charmbracelet/log"
 )
 
 type Tokenizer struct {
@@ -10,7 +12,7 @@ type Tokenizer struct {
 	Start   int
 	Current int
 	Line    int
-	Tokens  TokenList
+	tokens  TokenList
 }
 
 func NewTokenizer(data []byte) (Tokenizer, error) {
@@ -19,7 +21,7 @@ func NewTokenizer(data []byte) (Tokenizer, error) {
 	}
 	return Tokenizer{
 		Data:   data,
-		Tokens: newTokenList(),
+		tokens: newTokenList(),
 	}, nil
 }
 
@@ -27,14 +29,14 @@ func (t *Tokenizer) Tokenize() error {
 	for t.Current < len(t.Data) {
 		c := t.Advance()
 		if isNumber(c) {
-			t.EmitLiteral(isNumber, TOKEN_NUMBER)
+			// t.EmitLiteral(isNumber, TOKEN_NUMBER)
 			continue
 		}
 		if isAlpha(c) {
 			// we're just gonna decide it's a rule that identifiers need double quotes.
 			// kinda sucks but makes my life easier.
 			// may change later.
-			t.EmitLiteral(isAlpha, TOKEN_KEYWORD)
+			// t.EmitLiteral(isAlpha, TOKEN_KEYWORD)
 			continue
 		}
 		switch c {
@@ -79,18 +81,18 @@ func (t *Tokenizer) Tokenize() error {
 				return errors.New("invalid syntax")
 			}
 		case '\'':
-			t.EmitLiteral(func(c byte) bool { return c != '\'' }, TOKEN_STRING)
+			t.EmitBound('\'', TOKEN_STRING)
 		case '"':
-			t.EmitLiteral(func(c byte) bool { return c != '"' }, TOKEN_IDENT)
+			t.EmitBound('"', TOKEN_IDENT)
 		}
 	}
 	return nil
 }
 
-func (t *Tokenizer) EmitLiteral(bound func(byte) bool, ttype TokenType) error {
+func (t *Tokenizer) EmitBound(bound byte, ttype TokenType) error {
 	for t.Current < len(t.Data) {
 		c := t.Advance()
-		if !bound(c) {
+		if c == bound {
 			t.Advance()
 			t.Emit(ttype)
 			return nil
@@ -99,7 +101,21 @@ func (t *Tokenizer) EmitLiteral(bound func(byte) bool, ttype TokenType) error {
 	return errors.New("literal not terminated")
 }
 
+func (t *Tokenizer) EmitLiteral(bound func(c byte) bool, ttype TokenType) error {
+	for t.Current < len(t.Data) {
+		if bound(t.Advance()) {
+			t.Emit(ttype)
+			return nil
+		}
+	}
+	return errors.New("literal not terminated (this one shouln't happen)")
+}
+
 func (t *Tokenizer) Advance() byte {
+	if t.Current > len(t.Data) {
+		log.Warn("tried to advance past data length")
+		return 0
+	}
 	char := t.Data[t.Current]
 	t.Current++
 	return char
@@ -116,7 +132,13 @@ func (t *Tokenizer) Emit(ttype TokenType) {
 		Line:    t.Line,
 	}
 	t.Start = t.Current
-	t.Tokens.Push(result)
+	t.tokens.Push(result)
+}
+
+func (t *Tokenizer) GetTokens() []Token {
+	t.tokens.lock.RLock()
+	defer t.tokens.lock.RUnlock()
+	return t.tokens.Tokens
 }
 
 type TokenList struct {
