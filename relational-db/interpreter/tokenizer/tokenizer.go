@@ -25,7 +25,12 @@ func NewTokenizer(data []byte) (Tokenizer, error) {
 
 func (t *Tokenizer) Tokenize() error {
 	for t.Current < len(t.Data) {
-		switch t.Advance() {
+		c := t.Advance()
+		if isNumber(c) {
+			t.EmitLiteral(isNumber, TOKEN_NUMBER)
+			continue
+		}
+		switch c {
 		case ' ', '\t':
 			// skip whitespace
 		case '\n':
@@ -67,24 +72,24 @@ func (t *Tokenizer) Tokenize() error {
 				return errors.New("invalid syntax")
 			}
 		case '\'':
-			t.EmitLiteral('\'', TOKEN_STRING)
+			t.EmitLiteral(func(c byte) bool { return c != '\'' }, TOKEN_STRING)
 		case '"':
-			t.EmitLiteral('"', TOKEN_IDENT)
+			t.EmitLiteral(func(c byte) bool { return c != '"' }, TOKEN_IDENT)
 		}
 	}
 	return nil
 }
 
-func (t *Tokenizer) EmitLiteral(bound byte, ttype TokenType) error {
+func (t *Tokenizer) EmitLiteral(bound func(byte) bool, ttype TokenType) error {
 	for t.Current < len(t.Data) {
 		c := t.Advance()
-		if c == '\'' {
+		if !bound(c) {
 			t.Advance()
 			t.Emit(ttype)
 			return nil
 		}
 	}
-	return errors.New("string literal not terminated")
+	return errors.New("literal not terminated")
 }
 
 func (t *Tokenizer) Advance() byte {
@@ -143,4 +148,8 @@ func (l *TokenList) Peek() (Token, error) {
 		return Token{}, errors.New("nothing to return")
 	}
 	return l.Tokens[0], nil
+}
+
+func isNumber(c byte) bool {
+	return '0' < c && '9' > c
 }

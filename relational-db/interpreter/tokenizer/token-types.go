@@ -34,5 +34,6 @@ const (
 	// keywords... almost definitely not going to implement all of these
 	TOKEN_STRING
 	TOKEN_IDENT
+	TOKEN_NUMBER
 	TOKEN_KEYWORD
 )
