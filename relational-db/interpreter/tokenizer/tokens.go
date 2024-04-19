@@ -21,7 +21,6 @@ const (
 	TOKEN_EQUALS
 	TOKEN_PLUS
 	TOKEN_MINUS
-	TOKEN_BANG
 
 	// two-character symbols
 	TOKEN_GREATER_EQUALS
