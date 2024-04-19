@@ -30,6 +30,13 @@ func (t *Tokenizer) Tokenize() error {
 			t.EmitLiteral(isNumber, TOKEN_NUMBER)
 			continue
 		}
+		if isAlpha(c) {
+			// we're just gonna decide it's a rule that identifiers need double quotes.
+			// kinda sucks but makes my life easier.
+			// may change later.
+			t.EmitLiteral(isAlpha, TOKEN_KEYWORD)
+			continue
+		}
 		switch c {
 		case ' ', '\t':
 			// skip whitespace
@@ -151,5 +158,10 @@ func (l *TokenList) Peek() (Token, error) {
 }
 
 func isNumber(c byte) bool {
-	return '0' < c && '9' > c
+	return '0' <= c && '9' >= c
+}
+
+func isAlpha(c byte) bool {
+	return 'a' <= c && 'z' >= c ||
+		'A' <= c && 'Z' >= c
 }
