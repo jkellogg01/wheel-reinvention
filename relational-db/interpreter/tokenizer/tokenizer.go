@@ -25,14 +25,6 @@ func NewTokenizer(data []byte) (Tokenizer, error) {
 func (t *Tokenizer) Tokenize() error {
 	for t.Current < len(t.Data) {
 		switch t.Advance() {
-		case '\'':
-			// not sure if this is correct:
-			// single quotes usually denote string literals
-			t.Emit(TOKEN_SQUOTE)
-		case '"':
-			// not sure if this is correct:
-			// double quotes usually denote identifiers
-			t.Emit(TOKEN_DQUOTE)
 		case ';':
 			t.Emit(TOKEN_SEMICOLON)
 		case '(':
