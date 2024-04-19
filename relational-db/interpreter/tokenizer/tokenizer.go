@@ -1,11 +1,15 @@
 package tokenizer
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 type Tokenizer struct {
 	Data    []byte
 	Start   int
 	Current int
+	Tokens  TokenList
 }
 
 func NewTokenizer(data []byte) (Tokenizer, error) {
@@ -13,57 +17,103 @@ func NewTokenizer(data []byte) (Tokenizer, error) {
 		return Tokenizer{}, errors.New("no data")
 	}
 	return Tokenizer{
-		Data: data,
+		Data:   data,
+		Tokens: newTokenList(),
 	}, nil
 }
 
-func (t *Tokenizer) Tokenize() (TokenQueue, error) {
-	result := make(TokenQueue, 0)
+func (t *Tokenizer) Tokenize() error {
 	for t.Current < len(t.Data) {
-		c := t.Data[t.Current]
-		switch c {
+		switch t.Advance() {
 		case '\'':
-			result.Push(TOKEN_SQUOTE)
+			// not sure if this is correct:
+			// single quotes usually denote string literals
+			t.Emit(TOKEN_SQUOTE)
 		case '"':
-			result.Push(TOKEN_DQUOTE)
+			// not sure if this is correct:
+			// double quotes usually denote identifiers
+			t.Emit(TOKEN_DQUOTE)
 		case ';':
-			result.Push(TOKEN_SEMICOLON)
+			t.Emit(TOKEN_SEMICOLON)
 		case '(':
-			result.Push(TOKEN_LPAREN)
+			t.Emit(TOKEN_LPAREN)
 		case ')':
-			result.Push(TOKEN_RPAREN)
+			t.Emit(TOKEN_RPAREN)
 		case '[':
-			result.Push(TOKEN_LBRACK)
+			t.Emit(TOKEN_LBRACK)
 		case ']':
-			result.Push(TOKEN_RBRACK)
+			t.Emit(TOKEN_RBRACK)
 		case '*':
-			result.Push(TOKEN_SPLAT)
+			t.Emit(TOKEN_SPLAT)
 		case '.':
-			result.Push(TOKEN_DOT)
+			t.Emit(TOKEN_DOT)
 		case ',':
-			result.Push(TOKEN_COMMA)
+			t.Emit(TOKEN_COMMA)
 		case '=':
-			result.Push(TOKEN_EQUALS)
+			t.Emit(TOKEN_EQUALS)
 		case '+':
-			result.Push(TOKEN_PLUS)
+			t.Emit(TOKEN_PLUS)
 		case '-':
-			result.Push(TOKEN_MINUS)
+			t.Emit(TOKEN_MINUS)
 		}
 	}
-	return result, nil
+	return nil
 }
 
-type TokenQueue []Token
-
-func (q *TokenQueue) Push(token Token) {
-	*q = append(*q, token)
+func (t *Tokenizer) Advance() byte {
+	char := t.Data[t.Current]
+	t.Current++
+	return char
 }
 
-func (q *TokenQueue) Pop() (Token, error) {
-	if len(*q) < 1 {
-		return -1, errors.New("nothing to dequeue")
+func (t *Tokenizer) Peek() byte {
+	return t.Data[t.Current]
+}
+
+func (t *Tokenizer) Emit(ttype TokenType) {
+	result := Token{
+		Type:  ttype,
+		Start: t.Start,
+		End:   t.Current,
 	}
-	val := (*q)[0]
-	*q = (*q)[1:]
+	t.Start = t.Current
+	t.Tokens.Push(result)
+}
+
+type TokenList struct {
+	Tokens []Token
+	lock   sync.RWMutex
+}
+
+func newTokenList() TokenList {
+	return TokenList{
+		Tokens: make([]Token, 0),
+		lock:   sync.RWMutex{},
+	}
+}
+
+func (l *TokenList) Push(token Token) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	l.Tokens = append(l.Tokens, token)
+}
+
+func (l *TokenList) Pop() (Token, error) {
+	val, err := l.Peek()
+	if err != nil {
+		return val, err
+	}
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	l.Tokens = l.Tokens[1:]
 	return val, nil
+}
+
+func (l *TokenList) Peek() (Token, error) {
+	l.lock.RLock()
+	defer l.lock.RUnlock()
+	if len(l.Tokens) < 1 {
+		return Token{}, errors.New("nothing to return")
+	}
+	return l.Tokens[0], nil
 }

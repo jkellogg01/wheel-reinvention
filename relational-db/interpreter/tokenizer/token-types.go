@@ -1,12 +1,18 @@
 package tokenizer
 
-type Token int
+type Token struct {
+	Start int
+	End   int
+	Type  TokenType
+}
 
-type Keyword Token
+type TokenType int
+
+type Keyword TokenType
 
 const (
 	// one-character symbols
-	TOKEN_SQUOTE Token = iota
+	TOKEN_SQUOTE TokenType = iota
 	TOKEN_DQUOTE
 	TOKEN_SEMICOLON
 	TOKEN_LPAREN
