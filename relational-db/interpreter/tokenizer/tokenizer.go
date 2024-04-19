@@ -39,10 +39,6 @@ func (t *Tokenizer) Tokenize() error {
 			t.Emit(TOKEN_LPAREN)
 		case ')':
 			t.Emit(TOKEN_RPAREN)
-		case '[':
-			t.Emit(TOKEN_LBRACK)
-		case ']':
-			t.Emit(TOKEN_RBRACK)
 		case '*':
 			t.Emit(TOKEN_SPLAT)
 		case '.':
