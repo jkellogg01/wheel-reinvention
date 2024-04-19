@@ -3,6 +3,7 @@ package tokenizer
 type Token struct {
 	Start int
 	End   int
+	Line  int
 	Type  TokenType
 }
 
@@ -10,9 +11,7 @@ type TokenType int
 
 const (
 	// one-character symbols
-	TOKEN_SQUOTE TokenType = iota
-	TOKEN_DQUOTE
-	TOKEN_SEMICOLON
+	TOKEN_SEMICOLON TokenType = iota
 	TOKEN_LPAREN
 	TOKEN_RPAREN
 	TOKEN_GREATER

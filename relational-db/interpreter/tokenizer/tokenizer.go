@@ -9,6 +9,7 @@ type Tokenizer struct {
 	Data    []byte
 	Start   int
 	Current int
+	Line    int
 	Tokens  TokenList
 }
 
@@ -25,6 +26,10 @@ func NewTokenizer(data []byte) (Tokenizer, error) {
 func (t *Tokenizer) Tokenize() error {
 	for t.Current < len(t.Data) {
 		switch t.Advance() {
+		case ' ', '\t':
+			// skip whitespace
+		case '\n':
+			t.Line++
 		case ';':
 			t.Emit(TOKEN_SEMICOLON)
 		case '(':
@@ -43,6 +48,24 @@ func (t *Tokenizer) Tokenize() error {
 			t.Emit(TOKEN_PLUS)
 		case '-':
 			t.Emit(TOKEN_MINUS)
+		case '>':
+			if t.Peek() == '=' {
+				t.Emit(TOKEN_GREATER_EQUALS)
+			} else {
+				t.Emit(TOKEN_GREATER)
+			}
+		case '<':
+			if t.Peek() == '=' {
+				t.Emit(TOKEN_LESS_EQUALS)
+			} else {
+				t.Emit(TOKEN_LESS)
+			}
+		case '!':
+			if t.Peek() == '=' {
+				t.Emit(TOKEN_BANG_EQUALS)
+			} else {
+				return errors.New("invalid syntax")
+			}
 		}
 	}
 	return nil
@@ -63,6 +86,7 @@ func (t *Tokenizer) Emit(ttype TokenType) {
 		Type:  ttype,
 		Start: t.Start,
 		End:   t.Current,
+		Line:  t.Line,
 	}
 	t.Start = t.Current
 	t.Tokens.Push(result)
