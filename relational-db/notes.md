@@ -1,6 +1,6 @@
 ## language options
 
-I'm probably going to use go. 
+I'm probably going to use go.
 Normally, garbage collection would be a problem with a dbms (although i think cassandra or something is written in java? so it's not unheard of) but I think the simplicity will make it way easier to actually finish the project and that's worth the performance tradeoffs.
 
 ## file format & compatibility
@@ -14,28 +14,27 @@ If the database host crashes during a transaction, this second file is called a 
 
 ### pages
 
-SQLite database files are made up of one or more *pages*[^1] .
+SQLite database files are made up of one or more _pages_[^1] .
 The size of a page in bytes is 2^x where x satisfies the range [9, 16].
-The maximum page number is 2^32 - 2 (4,294,967,294) meaning that most systems will run out of disk space long [^2] before a database reaches maximum capacity. 
+The maximum page number is 2^32 - 2 (4,294,967,294) meaning that most systems will run out of disk space long [^2] before a database reaches maximum capacity.
 
 [^1]: pages and files are not interchangeable. a fie contains multiple pages. a database mostly consists of a single file.
 [^2]: a SQLite databse can store up to about 281 terabytes of data
 
-Each *page* has **exactly one** use at each point in time:
+Each _page_ has **exactly one** use at each point in time:
+
 - The lock-byte page
 - A freelist page
-    - A freelist trunk page
-    - A freelist leaf page
+  - A freelist trunk page
+  - A freelist leaf page
 - A b-tree page
-    - A table b-tree interior page
-    - A table b-tree leaf page
-    - An index b-tree interior page
-    - An index b-tree leaf page
+  - A table b-tree interior page
+  - A table b-tree leaf page
+  - An index b-tree interior page
+  - An index b-tree leaf page
 - A payload overflow page
 - A pointer map page
 
 ### database header
 
 the database header format can be found [here](https://www.sqlite.org/fileformat2.html#the_database_header). No point copy-pasting it.
-
-
