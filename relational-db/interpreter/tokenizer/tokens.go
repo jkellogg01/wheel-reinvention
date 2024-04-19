@@ -29,6 +29,10 @@ const (
 	TOKEN_BANG_EQUALS
 	// there have got to be more, right?
 
+	// some special tokens
+	TOKEN_EOF
+	TOKEN_ERROR
+
 	// keywords... almost definitely not going to implement all of these
 	TOKEN_ABORT Keyword = iota
 	TOKEN_ACTION
