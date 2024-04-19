@@ -66,9 +66,25 @@ func (t *Tokenizer) Tokenize() error {
 			} else {
 				return errors.New("invalid syntax")
 			}
+		case '\'':
+			t.EmitLiteral('\'', TOKEN_STRING)
+		case '"':
+			t.EmitLiteral('"', TOKEN_IDENT)
 		}
 	}
 	return nil
+}
+
+func (t *Tokenizer) EmitLiteral(bound byte, ttype TokenType) error {
+	for t.Current < len(t.Data) {
+		c := t.Advance()
+		if c == '\'' {
+			t.Advance()
+			t.Emit(ttype)
+			return nil
+		}
+	}
+	return errors.New("string literal not terminated")
 }
 
 func (t *Tokenizer) Advance() byte {
@@ -83,10 +99,9 @@ func (t *Tokenizer) Peek() byte {
 
 func (t *Tokenizer) Emit(ttype TokenType) {
 	result := Token{
-		Type:  ttype,
-		Start: t.Start,
-		End:   t.Current,
-		Line:  t.Line,
+		Type:    ttype,
+		Content: t.Data[t.Start:t.Current],
+		Line:    t.Line,
 	}
 	t.Start = t.Current
 	t.Tokens.Push(result)

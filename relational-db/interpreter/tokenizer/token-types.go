@@ -1,10 +1,9 @@
 package tokenizer
 
 type Token struct {
-	Start int
-	End   int
-	Line  int
-	Type  TokenType
+	Content []byte
+	Line    int
+	Type    TokenType
 }
 
 type TokenType int
@@ -33,6 +32,7 @@ const (
 	TOKEN_ERROR
 
 	// keywords... almost definitely not going to implement all of these
-	TOKEN_LITERAL
+	TOKEN_STRING
+	TOKEN_IDENT
 	TOKEN_KEYWORD
 )
