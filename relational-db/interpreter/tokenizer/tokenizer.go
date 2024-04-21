@@ -28,15 +28,16 @@ func NewTokenizer(data []byte) (Tokenizer, error) {
 func (t *Tokenizer) Tokenize() error {
 	for t.Current < len(t.Data) {
 		c := t.Advance()
+		log.Debug("Scanning...", "char", string(c), "idx", t.Current)
 		if isNumber(c) {
-			// t.EmitLiteral(isNumber, TOKEN_NUMBER)
+			t.EmitLiteral(isNumber, TOKEN_NUMBER)
 			continue
 		}
 		if isAlpha(c) {
 			// we're just gonna decide it's a rule that identifiers need double quotes.
 			// kinda sucks but makes my life easier.
 			// may change later.
-			// t.EmitLiteral(isAlpha, TOKEN_KEYWORD)
+			t.EmitLiteral(isAlpha, TOKEN_KEYWORD)
 			continue
 		}
 		switch c {
@@ -103,7 +104,7 @@ func (t *Tokenizer) EmitBound(bound byte, ttype TokenType) error {
 
 func (t *Tokenizer) EmitLiteral(bound func(c byte) bool, ttype TokenType) error {
 	for t.Current < len(t.Data) {
-		if bound(t.Advance()) {
+		if !bound(t.Advance()) {
 			t.Emit(ttype)
 			return nil
 		}
@@ -112,7 +113,7 @@ func (t *Tokenizer) EmitLiteral(bound func(c byte) bool, ttype TokenType) error 
 }
 
 func (t *Tokenizer) Advance() byte {
-	if t.Current > len(t.Data) {
+	if t.Current >= len(t.Data) {
 		log.Warn("tried to advance past data length")
 		return 0
 	}
@@ -131,6 +132,7 @@ func (t *Tokenizer) Emit(ttype TokenType) {
 		Content: t.Data[t.Start:t.Current],
 		Line:    t.Line,
 	}
+	log.Debug("Emitting token", "type", ttype, "content", string(result.Content))
 	t.Start = t.Current
 	t.tokens.Push(result)
 }
